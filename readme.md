@@ -11,5 +11,5 @@ pip install requirements.txt
 
 ### Run with
 ```
-streamlit run main.py
+streamlit run main.py --server.port=8080
 ```

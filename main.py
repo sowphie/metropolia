@@ -71,7 +71,7 @@ input_type = st.radio(
 
 # Image Upload
 if input_type == ":rainbow[Image Upload]":
-    image_upload = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
+    image_upload = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"], accept_multiple_files=False, )
     if image_upload:
         if check_openai_key(): # Key Checker
             st.image(image_upload)
