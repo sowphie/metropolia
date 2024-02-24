@@ -7,6 +7,11 @@ from kittycad.client import Client
 from functions.text_to_cad import text_to_cad_create, get_text_to_cad_model, decode_stl
 from functions.img_to_text import describe_image
 
+st.set_page_config(
+    page_title="Modmatrix AI",
+    page_icon="✨",
+)
+
 st.title('AI Modmatrix ✨')
 st.subheader('This is a simple AI project prototyping tool, inspired by synthesizer modulation matrices.')
 st.write('You can find the source code [in this public repository](https://github.com/chris-ernst/modmatrix-ai). Feel free to use it for your own projects.')
