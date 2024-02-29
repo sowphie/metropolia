@@ -89,7 +89,7 @@ elif input_type == "Webcam Capture":
         st.image(webcam_capture)
         if st.button('Describe Image'):
             with st.spinner('Processing...'):
-                st.session_state.input_result_string = describe_image(webcam_capture)
+                st.session_state.input_result_string = describe_image(webcam_capture, openai_api_key)
             st.success('Done!')
 
 
