@@ -49,12 +49,12 @@ st.sidebar.caption('This key is needed for the 3D CAD model output. Get yours [h
 openAI_client = OpenAI(api_key=openai_api_key)
 
 
-def check_openai_key():
-    if not openai_api_key.startswith('sk-'):
-        st.warning('Please enter your OpenAI API key in the sidebar! This key is needed for all operations. Get yours [here](https://platform.openai.com/docs/quickstart/step-2-set-up-your-api-key).', icon='⚠')
-        return False
-    else:
-        return True
+# def check_openai_key():
+#     if not openai_api_key.startswith('sk-'):
+#         st.warning('Please enter your OpenAI API key in the sidebar! This key is needed for all operations. Get yours [here](https://platform.openai.com/docs/quickstart/step-2-set-up-your-api-key).', icon='⚠')
+#         return False
+#     else:
+#         return True
 
 if not openai_api_key.startswith('sk-'):
     st.warning('Please enter your OpenAI API key in the sidebar. Get yours [here](https://platform.openai.com/docs/quickstart/step-2-set-up-your-api-key).')
@@ -73,24 +73,24 @@ input_type = st.radio(
 if input_type == ":rainbow[Image Upload]":
     image_upload = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"], accept_multiple_files=False, )
     if image_upload:
-        if check_openai_key(): # Key Checker
-            st.image(image_upload)
-            if st.button('Describe Image'):
-                with st.spinner('Processing...'):
-                    st.session_state.input_result_string = describe_image(image_upload, openai_api_key)
-                st.success('Done!')
+        #if check_openai_key(): # Key Checker
+        st.image(image_upload)
+        if st.button('Describe Image'):
+            with st.spinner('Processing...'):
+                st.session_state.input_result_string = describe_image(image_upload, openai_api_key)
+            st.success('Done!')
 
 
 # Webcam Capture
 elif input_type == "Webcam Capture":
     webcam_capture = st.camera_input("Take a webcam_capture")
     if webcam_capture:
-        if check_openai_key(): # Key Checker
-            st.image(webcam_capture)
-            if st.button('Describe Image'):
-                with st.spinner('Processing...'):
-                    st.session_state.input_result_string = describe_image(webcam_capture)
-                st.success('Done!')
+        #if check_openai_key(): # Key Checker
+        st.image(webcam_capture)
+        if st.button('Describe Image'):
+            with st.spinner('Processing...'):
+                st.session_state.input_result_string = describe_image(webcam_capture)
+            st.success('Done!')
 
 
 # Text Input
@@ -108,15 +108,15 @@ elif input_type == "Text":
 elif input_type == "Audio (Speech)":
     audio_input = st.file_uploader("Upload an audio file", type=["mp3", "wav"])
     if audio_input is not None:
-        if check_openai_key():  # Key Checker
-            client = OpenAI(api_key=openai_api_key)
-            with st.spinner('Processing...'):
-                st.session_state.input_result_string = client.audio.transcriptions.create(
-                    model="whisper-1",
-                    file=audio_input,
-                    response_format="text"
-                )
-            st.success('Done!')
+        # if check_openai_key():  # Key Checker
+        client = OpenAI(api_key=openai_api_key)
+        with st.spinner('Processing...'):
+            st.session_state.input_result_string = client.audio.transcriptions.create(
+                model="whisper-1",
+                file=audio_input,
+                response_format="text"
+            )
+        st.success('Done!')
 
 
 # Microcontroller Data TODO: Implement
@@ -149,19 +149,19 @@ with st.form('modifying_prompt_input_form'):
                                          placeholder="Your optional modifying prompt here. Can be left empty if not needed, but you will still need to submit it.")
     modifying_prompt_submitted = st.form_submit_button('Enter')
     if modifying_prompt_submitted and modifying_prompt_text != '':
-        if check_openai_key():  # Key Checker
-            st.session_state.modifying_prompt = modifying_prompt_text
+        #if check_openai_key():  # Key Checker
+        st.session_state.modifying_prompt = modifying_prompt_text
 
-            completion = openAI_client.chat.completions.create(
-                model="gpt-3.5-turbo",
-                messages=[
-                    {"role": "system", "content": st.session_state.input_result_string},
-                    {"role": "user", "content": st.session_state.modifying_prompt}
-                ]
-            )
+        completion = openAI_client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": st.session_state.input_result_string},
+                {"role": "user", "content": st.session_state.modifying_prompt}
+            ]
+        )
 
-            print(completion.choices[0].message.content)
-            st.session_state.output_result_string = completion.choices[0].message.content
+        print(completion.choices[0].message.content)
+        st.session_state.output_result_string = completion.choices[0].message.content
 
     elif modifying_prompt_submitted and modifying_prompt_text == '':
         st.info("Skipping modifying prompt.")
@@ -185,19 +185,19 @@ output_type = st.radio(
 # Image Upload
 if output_type == ":rainbow[Image]":
     if st.button('Generate Image'):
-        if check_openai_key():  # Key Checker
-            with st.spinner('Processing...'):
-                response = openAI_client.images.generate(
-                    model="dall-e-3",
-                    prompt=st.session_state.output_result_string,
-                    size="1024x1024",
-                    quality="standard",
-                    n=1,
-                )
-                image_url = response.data[0].url
-            st.success('Done!')
-            st.image(image_url)
-            st.link_button("Download Image", image_url)
+        #if check_openai_key():  # Key Checker
+        with st.spinner('Processing...'):
+            response = openAI_client.images.generate(
+                model="dall-e-3",
+                prompt=st.session_state.output_result_string,
+                size="1024x1024",
+                quality="standard",
+                n=1,
+            )
+            image_url = response.data[0].url
+        st.success('Done!')
+        st.image(image_url)
+        st.link_button("Download Image", image_url)
 
 # Text Input
 elif output_type == "Text":
