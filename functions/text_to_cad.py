@@ -8,7 +8,7 @@ from kittycad.types import Response
 
 import base64
 
-def text_to_cad_create(prompt):
+def text_to_cad_create(prompt, client):
 
     result: Optional[Union[TextToCad, Error]] = create_text_to_cad.sync(
         client=client,
@@ -27,7 +27,7 @@ def text_to_cad_create(prompt):
     return body.id
 
 
-def get_text_to_cad_model(generation_id):
+def get_text_to_cad_model(generation_id, client):
     result: Optional[
         Union[TextToCad, Error]
     ] = get_text_to_cad_model_for_user.sync(

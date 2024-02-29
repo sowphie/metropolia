@@ -247,13 +247,13 @@ elif output_type == "CAD Model (Experimental)":
 
                 # Sending Query
                 st.write("Sending Query...")
-                cad_gen_id = text_to_cad_create(st.session_state.output_result_string)
+                cad_gen_id = text_to_cad_create(st.session_state.output_result_string, client)
                 st.write(200, f"CAD Gen ID: {cad_gen_id}")
                 st.write("Fetching 3D Model...")
 
                 # Fetching Model
                 while True:
-                    cad_response_body = get_text_to_cad_model(cad_gen_id)
+                    cad_response_body = get_text_to_cad_model(cad_gen_id, client)
                     if cad_response_body.status == 'failed':
                         st.write(500, f'Generation {cad_response_body.status}, aborting')
                         break
