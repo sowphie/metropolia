@@ -1,6 +1,6 @@
 from openai import OpenAI
 import streamlit as st
-# from elevenlabs import generate
+from elevenlabs import generate
 import time
 from kittycad.client import Client
 
@@ -40,8 +40,8 @@ st.sidebar.write(
 st.sidebar.write('---')
 st.sidebar.header('Optional Settings')
 
-# ELEVENLABS_API_KEY = st.sidebar.text_input('11Labs Text-To-Speech API Key (optional)', type='password')
-# st.sidebar.caption('This key is needed for the audio output. Get yours [here](https://elevenlabs.io/api).')
+ELEVENLABS_API_KEY = st.sidebar.text_input('11Labs Text-To-Speech API Key (optional)', type='password')
+st.sidebar.caption('This key is needed for the audio output. Get yours [here](https://elevenlabs.io/api).')
 
 ZOO_CAD_API_KEY = st.sidebar.text_input('Zoo CAD API Key (optional)', type='password')
 st.sidebar.caption('This key is needed for the 3D CAD model output. Get yours [here](https://zoo.dev/docs/api/authentication).')
@@ -204,28 +204,28 @@ elif output_type == "Text":
     st.write(st.session_state.output_result_string)
 
 # Audio Text to Speech
-# elif output_type == "Audio (Speech)":
-#     if ELEVENLABS_API_KEY == '':
-#         st.warning("Please enter your **paid** 11Labs API Key in the settings to generate the audio.")
-#     if ELEVENLABS_API_KEY != '':
-#         from elevenlabs import set_api_key
-#
-#         set_api_key(ELEVENLABS_API_KEY)
-#         if st.button('Generate Audio'):
-#             audio_output_char_count = len(st.session_state.output_result_string)
-#             if audio_output_char_count > 2500:
-#                 st.warning(
-#                     f"Your text is {audio_output_char_count} characters long. The maximum character count for the free tier is 2500. Shortening text.")
-#                 st.session_state.output_result_string = st.session_state.output_result_string[:2500]
-#
-#             with st.spinner('Processing...'):
-#                 elevenlabs_audio = generate(
-#                     text=st.session_state.output_result_string,
-#                     voice="George",
-#                     model="eleven_multilingual_v2"
-#                 )
-#             st.success('Done!')
-#             st.audio(elevenlabs_audio, format='audio/mpeg')
+elif output_type == "Audio (Speech)":
+    if ELEVENLABS_API_KEY == '':
+        st.warning("Please enter your **paid** 11Labs API Key in the settings to generate the audio.")
+    if ELEVENLABS_API_KEY != '':
+        from elevenlabs import set_api_key
+
+        set_api_key(ELEVENLABS_API_KEY)
+        if st.button('Generate Audio'):
+            audio_output_char_count = len(st.session_state.output_result_string)
+            if audio_output_char_count > 2500:
+                st.warning(
+                    f"Your text is {audio_output_char_count} characters long. The maximum character count for the free tier is 2500. Shortening text.")
+                st.session_state.output_result_string = st.session_state.output_result_string[:2500]
+
+            with st.spinner('Processing...'):
+                elevenlabs_audio = generate(
+                    text=st.session_state.output_result_string,
+                    voice="George",
+                    model="eleven_multilingual_v2"
+                )
+            st.success('Done!')
+            st.audio(elevenlabs_audio, format='audio/mpeg')
 
 
 # Microcontroller Data TODO: Implement
