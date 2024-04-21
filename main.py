@@ -1,3 +1,6 @@
+#### Start of Initialisation (Mandatory)
+
+# Importing Packages
 from openai import OpenAI
 import streamlit as st
 from elevenlabs import generate
@@ -7,65 +10,126 @@ from kittycad.client import Client
 from functions.text_to_cad import text_to_cad_create, get_text_to_cad_model, decode_stl
 from functions.img_to_text import describe_image
 
-st.set_page_config(
-    page_title="Modmatrix AI",
-    page_icon="✨",
-)
+from streamlit_session_browser_storage import SessionStorage
 
+# Setting up Page
+st.set_page_config(page_title="Modmatrix AI",page_icon="✨", initial_sidebar_state="collapsed")
 st.title('AI Modmatrix ✨')
 st.subheader('This is a simple AI project prototyping tool, inspired by synthesizer modulation matrices.')
 st.write('You can find the source code [in this public repository](https://github.com/chris-ernst/modmatrix-ai). Feel free to use it for your own projects.')
 st.write('*Hint: To quickly spin up your own instance, use [Replit](https://replit.com/) and [import the repo](https://docs.replit.com/programming-ide/using-git-on-replit/import-repository). 🚀*')
 
-# Session State Initialization for 'input_result_string'
+# Session State Initializations for prompt and result strings
+sessionBrowserS = SessionStorage()
+
 if 'input_result_string' not in st.session_state:
     st.session_state.input_result_string = ''
-
-# Session State Initialization for 'modifying_prompt'
 if 'modifying_prompt' not in st.session_state:
     st.session_state.modifying_prompt = ''
-
-# Session State Initialization for 'output_result_string'
 if 'output_result_string' not in st.session_state:
     st.session_state.output_result_string = ''
 
-# Settings in Sidebar
-st.sidebar.header('Settings')
-openai_api_key = st.sidebar.text_input('OpenAI API Key', type='password')
+#### End of Initialisation (Mandatory)
+
+
+
+#### Start of API Key Management (Optional)
+# Delete all key management if you want to hard-code your own keys.
+# Make sure you use the correct key names, which are:
+# Open_AI_API_KEY, ELEVENLABS_API_KEY, ZOO_CAD_API_KEY
+
+# Session State Initializations for API Keys
+if "OPEN_AI_API_KEY" not in st.session_state:
+    st.session_state.open_ai_api_key = ''
+if "ELEVENLABS_API_KEY" not in st.session_state:
+    st.session_state.elevenlabs_api_key = ''
+if "ZOO_CAD_API_KEY" not in st.session_state:
+    st.session_state.zoo_cad_api_key = ''
+
+st.sidebar.title('API Key Management')
+
+# OpenAI
+st.sidebar.header('OpenAI')
+
+if sessionBrowserS.getItem("OPEN_AI_API_KEY") is not None or not 'null':
+    openai_api_key = sessionBrowserS.getItem("OPEN_AI_API_KEY")
+    st.session_state.open_ai_api_key = openai_api_key
+
+if st.session_state.open_ai_api_key != '':
+    openai_api_key = st.sidebar.text_input('OpenAI API Key', type='password', value=st.session_state.open_ai_api_key)
+    st.sidebar.success('OpenAI-API Key set from Cookie')
+else:
+    openai_api_key = st.sidebar.text_input('OpenAI API Key', type='password')
+    if openai_api_key.startswith('sk-'):
+        sessionBrowserS.setItem("OPEN_AI_API_KEY", openai_api_key)
+        st.session_state.open_ai_api_key = openai_api_key
+        st.sidebar.success('OpenAI-API Key Saved')
+    else:
+        st.sidebar.write(
+            'This key is needed for all operations (we are using GPT-3.5-turbo, Whisper-2 and GPT-4-V). '
+            'Get yours [here](https://platform.openai.com/docs/quickstart/step-2-set-up-your-api-key).')
+
+
+# ELevenLabs
+st.sidebar.header('ElevenLabs')
+
+if sessionBrowserS.getItem("ELEVENLABS_API_KEY") is not None or not 'null':
+    elevenlabs_api_key = sessionBrowserS.getItem("ELEVENLABS_API_KEY")
+    st.session_state.elevenlabs_api_key = elevenlabs_api_key
+
+if st.session_state.elevenlabs_api_key != '':
+    elevenlabs_api_key = st.sidebar.text_input('ElevenLabs API Key', type='password', value=st.session_state.elevenlabs_api_key)
+    st.sidebar.success('ElevenLabs-API Key set from Cookie')
+else:
+    elevenlabs_api_key = st.sidebar.text_input('ElevenLabs API Key', type='password')
+    if elevenlabs_api_key != '':
+        sessionBrowserS.setItem("ELEVENLABS_API_KEY", elevenlabs_api_key)
+        st.session_state.elevenlabs_api_key = elevenlabs_api_key
+        st.sidebar.success('ElevenLabs-API Key Saved')
+    else:
+        st.sidebar.write(
+            'This key is needed for the audio output. Get yours [here](https://elevenlabs.io/api).')
+
+
+# Zoo CAD
+st.sidebar.header('Zoo CAD')
+
+if sessionBrowserS.getItem("ZOO_CAD_API_KEY") is not None or not 'null':
+    zoo_cad_api_key = sessionBrowserS.getItem("ZOO_CAD_API_KEY")
+    st.session_state.zoo_cad_api_key = zoo_cad_api_key
+
+if st.session_state.zoo_cad_api_key != '':
+    zoo_cad_api_key = st.sidebar.text_input('Zoo CAD API Key', type='password', value=st.session_state.zoo_cad_api_key)
+    st.sidebar.success('Zoo CAD-API Key set from Cookie')
+else:
+    zoo_cad_api_key = st.sidebar.text_input('Zoo CAD API Key', type='password')
+    if zoo_cad_api_key != '':
+        sessionBrowserS.setItem("ZOO_CAD_API_KEY", zoo_cad_api_key)
+        st.session_state.zoo_cad_api_key = zoo_cad_api_key
+        st.sidebar.success('Zoo CAD-API Key Saved')
+    else:
+        st.sidebar.write(
+            'This key is needed for the 3D CAD model output. Get yours [here](https://zoo.dev/docs/api/authentication).')
+
+#### End of key management (Optional)
+
+
+
+
+#### Start of Inputs
+
 if not openai_api_key.startswith('sk-'):
-    st.sidebar.warning('Please enter your OpenAI API key!', icon='⚠')
-st.sidebar.write(
-    'This key is needed for all operations. Get yours [here](https://platform.openai.com/docs/quickstart/step-2-set-up-your-api-key).')
-
-st.sidebar.write('---')
-st.sidebar.header('Optional Settings')
-
-ELEVENLABS_API_KEY = st.sidebar.text_input('11Labs Text-To-Speech API Key (optional)', type='password')
-st.sidebar.caption('This key is needed for the audio output. Get yours [here](https://elevenlabs.io/api).')
-
-ZOO_CAD_API_KEY = st.sidebar.text_input('Zoo CAD API Key (optional)', type='password')
-st.sidebar.caption('This key is needed for the 3D CAD model output. Get yours [here](https://zoo.dev/docs/api/authentication).')
+    st.error('Please enter your OpenAI API key in the sidebar. Get yours [here](https://platform.openai.com/docs/quickstart/step-2-set-up-your-api-key).')
+    exit(1)
 
 openAI_client = OpenAI(api_key=openai_api_key)
 
-
-# def check_openai_key():
-#     if not openai_api_key.startswith('sk-'):
-#         st.warning('Please enter your OpenAI API key in the sidebar! This key is needed for all operations. Get yours [here](https://platform.openai.com/docs/quickstart/step-2-set-up-your-api-key).', icon='⚠')
-#         return False
-#     else:
-#         return True
-
-if not openai_api_key.startswith('sk-'):
-    st.warning('Please enter your OpenAI API key in the sidebar. Get yours [here](https://platform.openai.com/docs/quickstart/step-2-set-up-your-api-key).')
-
-# Inputs
 st.write('---')
 st.header('Inputs')
 
 input_type = st.radio(
     "How would you like to provide your input?",
-    [":rainbow[Image Upload]", "Webcam Capture", "Text", "Audio (Speech)", ":grey[Microcontroller Data]"],
+    [":rainbow[Image Upload]", "Webcam Capture", "Text", "Audio (Speech)"],
     index=None, horizontal=True, label_visibility='collapsed'
 )
 
@@ -118,27 +182,20 @@ elif input_type == "Audio (Speech)":
             )
         st.success('Done!')
 
-
-# Microcontroller Data TODO: Implement
-elif input_type == ":grey[Microcontroller Data]":
-    st.error("This is not yet implemented. Please select another input type.")
-    # microcontroller_container = st.container(border=True)
-    # microcontroller_container.write(
-    #     "Please connect your microcontroller and press the button below to download the connection script.")
-    # microcontroller_container.download_button("Download Arduino Script", "microcontroller_script goes here",
-    #                                           "Click here to download the microcontroller connection script")
-    # microcontroller_container.button("Connect", type="primary")
-
-
 # No input type selected
 else:
-    if openai_api_key.startswith('sk-'):
-        st.info("Start here by selecting an input type")
+    st.info("Start here by selecting an input type")
 
 # Intermediate Printing
 st.write('---')
 st.header('🖨️')
 st.write(st.session_state.input_result_string)
+
+#### End of Inputs
+
+
+
+#### Start of Modifying Prompt (Optional)
 
 # Modifying Prompt
 st.write('---')
@@ -172,13 +229,18 @@ st.write('---')
 st.header('🖨️')
 st.write(st.session_state.output_result_string)
 
+#### End of Modifying Prompt (Optional)
+
+
+#### Start of Outputs
+
 # Outputs
 st.write('---')
 st.header('Outputs')
 
 output_type = st.radio(
     "How would you like to provide your output?",
-    [":rainbow[Image]", "Text", "Audio (Speech)", ":grey[Microcontroller Data]", "CAD Model (Experimental)"],
+    [":rainbow[Image]", "Text", "Audio (Speech)", "CAD Model (Experimental)"],
     index=None, horizontal=True, label_visibility='collapsed'
 )
 
@@ -205,12 +267,12 @@ elif output_type == "Text":
 
 # Audio Text to Speech
 elif output_type == "Audio (Speech)":
-    if ELEVENLABS_API_KEY == '':
+    if elevenlabs_api_key == '':
         st.warning("Please enter your **paid** 11Labs API Key in the settings to generate the audio.")
-    if ELEVENLABS_API_KEY != '':
+    if elevenlabs_api_key != '':
         from elevenlabs import set_api_key
 
-        set_api_key(ELEVENLABS_API_KEY)
+        set_api_key(elevenlabs_api_key)
         if st.button('Generate Audio'):
             audio_output_char_count = len(st.session_state.output_result_string)
             if audio_output_char_count > 2500:
@@ -227,17 +289,12 @@ elif output_type == "Audio (Speech)":
             st.success('Done!')
             st.audio(elevenlabs_audio, format='audio/mpeg')
 
-
-# Microcontroller Data TODO: Implement
-elif output_type == ":grey[Microcontroller Data]":
-    st.error("This is not yet implemented. Please select another output type.")
-
 # CAD Model
 elif output_type == "CAD Model (Experimental)":
-    if ZOO_CAD_API_KEY is None or ZOO_CAD_API_KEY == '':
+    if zoo_cad_api_key is None or zoo_cad_api_key == '':
         st.warning("Please enter your ZOO CAD API Key in the settings to generate the 3D model.")
     else:
-        client = Client(token=ZOO_CAD_API_KEY)
+        client = Client(token=zoo_cad_api_key)
         st.info(
             '**Straight from their [API documentation](https://zoo.dev/docs/api/ai/generate-a-cad-model-from-text?lang=python):** "This is an alpha endpoint. It will change in the future. The current output is honestly pretty bad. So if you find this endpoint, you get what you pay for, which currently is nothing. But in the future will be made a lot better."')
         cad_prompt_submitted = st.button("Submit")
@@ -274,3 +331,5 @@ elif output_type == "CAD Model (Experimental)":
                     mime="model/stl"
                 )
                 status.update(label="Generation complete", state="complete")
+
+#### End of Outputs
