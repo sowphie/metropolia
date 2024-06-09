@@ -20,9 +20,8 @@ client = openai.OpenAI(api_key=openai_api_key)
 # Authenticate the Replicate client using the environment variable
 sd_api_key = os.environ['sd_api_key']
 
-# Set page background color
+# Set page theme
 page_bg_color = "#000ff0"
-font_url = "https://fonts.google.com/specimen/Questrial?query=qu"
 font_color = "#ffffff"
 
 st.markdown(
