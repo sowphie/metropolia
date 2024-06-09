@@ -1,335 +1,161 @@
-#### Start of Initialisation (Mandatory)
 
-# Importing Packages
-from openai import OpenAI
 import streamlit as st
-from elevenlabs import generate
-import time
-from kittycad.client import Client
+import openai
+import os
+from st_audiorec import st_audiorec
+from streamlit_pannellum import streamlit_pannellum
+from PIL import Image
 
-from functions.text_to_cad import text_to_cad_create, get_text_to_cad_model, decode_stl
-from functions.img_to_text import describe_image
+#for audio transcription
+import transcribe
 
-from streamlit_session_browser_storage import SessionStorage
+#for text2image
+import requests
+from PIL import Image
 
-# Setting up Page
-st.set_page_config(page_title="Modmatrix AI",page_icon="✨", initial_sidebar_state="collapsed")
-st.title('AI Modmatrix ✨')
-st.subheader('This is a simple AI project prototyping tool, inspired by synthesizer modulation matrices.')
-st.write('You can find the source code [in this public repository](https://github.com/chris-ernst/modmatrix-ai). Feel free to use it for your own projects.')
-st.write('*Hint: To quickly spin up your own instance, use [Replit](https://replit.com/) and [import the repo](https://docs.replit.com/programming-ide/using-git-on-replit/import-repository). 🚀*')
+# Initialize the OpenAI client
+openai_api_key = os.environ['openai_api_key']
+client = openai.OpenAI(api_key=openai_api_key)
 
-# Session State Initializations for prompt and result strings
-sessionBrowserS = SessionStorage()
+# Authenticate the Replicate client using the environment variable
+sd_api_key = os.environ['sd_api_key']
 
-if 'input_result_string' not in st.session_state:
-    st.session_state.input_result_string = ''
-if 'modifying_prompt' not in st.session_state:
-    st.session_state.modifying_prompt = ''
-if 'output_result_string' not in st.session_state:
-    st.session_state.output_result_string = ''
+# Set page background color
+page_bg_color = "#000ff0"
+font_url = "https://fonts.google.com/specimen/Questrial?query=qu"
+font_color = "#ffffff"
 
-#### End of Initialisation (Mandatory)
+st.markdown(
+    f"""
+    <style>
+    .stApp {{
+        background-color: {page_bg_color};
+        secondary-background-color: {page_bg_color};
+        font-family: monospace ;
+        color: {font_color};
+    }}
+    .stText {{
+        font-family: monospace ;
+        color: {font_color}
+    }}
+    </style>
+    """,
+unsafe_allow_html=True)
 
+st.image("logo.png")
+st.write('Click on a pin to view the 360 photo.')
 
-
-#### Start of API Key Management (Optional)
-# Delete all key management if you want to hard-code your own keys.
-# Make sure you use the correct key names, which are:
-# Open_AI_API_KEY, ELEVENLABS_API_KEY, ZOO_CAD_API_KEY
-
-# Session State Initializations for API Keys
-if "OPEN_AI_API_KEY" not in st.session_state:
-    st.session_state.open_ai_api_key = ''
-if "ELEVENLABS_API_KEY" not in st.session_state:
-    st.session_state.elevenlabs_api_key = ''
-if "ZOO_CAD_API_KEY" not in st.session_state:
-    st.session_state.zoo_cad_api_key = ''
-
-st.sidebar.title('API Key Management')
-
-# OpenAI
-st.sidebar.header('OpenAI')
-
-if sessionBrowserS.getItem("OPEN_AI_API_KEY") is not None or not 'null':
-    openai_api_key = sessionBrowserS.getItem("OPEN_AI_API_KEY")
-    st.session_state.open_ai_api_key = openai_api_key
-
-if st.session_state.open_ai_api_key != '':
-    openai_api_key = st.sidebar.text_input('OpenAI API Key', type='password', value=st.session_state.open_ai_api_key)
-    st.sidebar.success('OpenAI-API Key set from Cookie')
-else:
-    openai_api_key = st.sidebar.text_input('OpenAI API Key', type='password')
-    if openai_api_key.startswith('sk-'):
-        sessionBrowserS.setItem("OPEN_AI_API_KEY", openai_api_key)
-        st.session_state.open_ai_api_key = openai_api_key
-        st.sidebar.success('OpenAI-API Key Saved')
-    else:
-        st.sidebar.write(
-            'This key is needed for all operations (we are using GPT-3.5-turbo, Whisper-2 and GPT-4-V). '
-            'Get yours [here](https://platform.openai.com/docs/quickstart/step-2-set-up-your-api-key).')
-
-
-# ELevenLabs
-st.sidebar.header('ElevenLabs')
-
-if sessionBrowserS.getItem("ELEVENLABS_API_KEY") is not None or not 'null':
-    elevenlabs_api_key = sessionBrowserS.getItem("ELEVENLABS_API_KEY")
-    st.session_state.elevenlabs_api_key = elevenlabs_api_key
-
-if st.session_state.elevenlabs_api_key != '':
-    elevenlabs_api_key = st.sidebar.text_input('ElevenLabs API Key', type='password', value=st.session_state.elevenlabs_api_key)
-    st.sidebar.success('ElevenLabs-API Key set from Cookie')
-else:
-    elevenlabs_api_key = st.sidebar.text_input('ElevenLabs API Key', type='password')
-    if elevenlabs_api_key != '':
-        sessionBrowserS.setItem("ELEVENLABS_API_KEY", elevenlabs_api_key)
-        st.session_state.elevenlabs_api_key = elevenlabs_api_key
-        st.sidebar.success('ElevenLabs-API Key Saved')
-    else:
-        st.sidebar.write(
-            'This key is needed for the audio output. Get yours [here](https://elevenlabs.io/api).')
-
-
-# Zoo CAD
-st.sidebar.header('Zoo CAD')
-
-if sessionBrowserS.getItem("ZOO_CAD_API_KEY") is not None or not 'null':
-    zoo_cad_api_key = sessionBrowserS.getItem("ZOO_CAD_API_KEY")
-    st.session_state.zoo_cad_api_key = zoo_cad_api_key
-
-if st.session_state.zoo_cad_api_key != '':
-    zoo_cad_api_key = st.sidebar.text_input('Zoo CAD API Key', type='password', value=st.session_state.zoo_cad_api_key)
-    st.sidebar.success('Zoo CAD-API Key set from Cookie')
-else:
-    zoo_cad_api_key = st.sidebar.text_input('Zoo CAD API Key', type='password')
-    if zoo_cad_api_key != '':
-        sessionBrowserS.setItem("ZOO_CAD_API_KEY", zoo_cad_api_key)
-        st.session_state.zoo_cad_api_key = zoo_cad_api_key
-        st.sidebar.success('Zoo CAD-API Key Saved')
-    else:
-        st.sidebar.write(
-            'This key is needed for the 3D CAD model output. Get yours [here](https://zoo.dev/docs/api/authentication).')
-
-#### End of key management (Optional)
-
-
-
-
-#### Start of Inputs
-
-if not openai_api_key.startswith('sk-'):
-    st.error('Please enter your OpenAI API key in the sidebar. Get yours [here](https://platform.openai.com/docs/quickstart/step-2-set-up-your-api-key).')
-    exit(1)
-
-openAI_client = OpenAI(api_key=openai_api_key)
-
-st.write('---')
-st.header('Inputs')
-
-input_type = st.radio(
-    "How would you like to provide your input?",
-    [":rainbow[Image Upload]", "Webcam Capture", "Text", "Audio (Speech)"],
-    index=None, horizontal=True, label_visibility='collapsed'
+# Embed the Google Map
+st.markdown(
+    '''
+    <iframe src="https://momento360.com/e/uc/4dcf0b8f1f704da686ae80fe02884c06?utm_campaign=embed&utm_source=other&size=medium&display-plan=true&open-plan=true" width="640" height="480"></iframe>
+    ''',
+    unsafe_allow_html=True
 )
 
-# Image Upload
-if input_type == ":rainbow[Image Upload]":
-    image_upload = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"], accept_multiple_files=False, )
-    if image_upload:
-        #if check_openai_key(): # Key Checker
-        st.image(image_upload)
-        if st.button('Describe Image'):
-            with st.spinner('Processing...'):
-                st.session_state.input_result_string = describe_image(image_upload, openai_api_key)
-            st.success('Done!')
+st.write("How would you like to modify this future?")
+    
+st.write("Hold the microphone to record your answer.")
+
+#Record and transcribe
+       
+wav_audio_data = st_audiorec()
+
+def get_next_audio_filename(directory, base_filename="audio", extension=".wav"):
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+    files = os.listdir(directory)
+    matching_files = [f for f in files if f.startswith(base_filename) and f.endswith(extension)]
+    numbers = [int(f[len(base_filename):-len(extension)]) for f in matching_files if f[len(base_filename):-len(extension)].isdigit()]
+    next_number = max(numbers, default=0) + 1
+    return os.path.join(directory, f"{base_filename}{next_number}{extension}")
+
+audio_directory = 'docs/audio'
+file_path = get_next_audio_filename(audio_directory)
+
+#file_path = 'docs/audio/audio.wav'
+
+if wav_audio_data is not None:
+    #st.audio(wav_audio_data, format='audio/wav') #display audio player
+    with open(file_path, 'wb') as new_file:
+        new_file.write(wav_audio_data)
+
+    result_transcription = transcribe.audio_transcribe(file_path)
+    transcription = str(result_transcription)
+    st.write("Transcription:", transcription)
+
+# text2image
+
+    if transcription is not None:
+    
+    # Load and resize the image
+        init_image_path = "Espanya1.png"
+        resized_image_path = "Espanya1_resized.png"
+
+        with Image.open(init_image_path) as img:
+            resized_img = img.resize((2048, 1024))
+            resized_img.save(resized_image_path)
+
+        response = requests.post(
+            "https://api.stability.ai/v2beta/stable-image/generate/sd3",
+            headers={
+                "authorization": sd_api_key,
+                "accept": "image/*"
+            },
+            files={
+                "image": open(resized_image_path, "rb")
+            },
+            data={
+                "prompt": transcription,
+                "image": resized_image_path,
+                "seed": None,
+                "strength": [0.6],
+                "mode": "image-to-image",
+                "output_format": "png",
+                "model": "sd3-turbo"
+            },
+        )
+            
+        if response.status_code == 200:
+            def get_next_image_filename(directory, base_filename="modifed", extension=".png"):
+                if not os.path.exists(directory):
+                    os.makedirs(directory)
+                files = os.listdir(directory)
+                matching_files = [f for f in files if f.startswith(base_filename) and f.endswith(extension)]
+                numbers = [int(f[len(base_filename):-len(extension)]) for f in matching_files if f[len(base_filename):-len(extension)].isdigit()]
+                next_number = max(numbers, default=0) + 1
+                return os.path.join(directory, f"{base_filename}{next_number}{extension}")
+            image_directory = 'docs/images'
+            image_path = get_next_image_filename(image_directory)
+            with open(image_path, 'wb') as new_image:
+                new_image = new_image.write(response.content)
+            print("New image saved")
+
+#generated_image_path = "docs/images/modified.png"
 
 
-# Webcam Capture
-elif input_type == "Webcam Capture":
-    webcam_capture = st.camera_input("Take a webcam_capture")
-    if webcam_capture:
-        #if check_openai_key(): # Key Checker
-        st.image(webcam_capture)
-        if st.button('Describe Image'):
-            with st.spinner('Processing...'):
-                st.session_state.input_result_string = describe_image(webcam_capture, openai_api_key)
-            st.success('Done!')
 
-
-# Text Input
-elif input_type == "Text":
-    with st.form('text_input_form'):
-        text_input = st.text_area("Enter text", placeholder="Write a nice text here!")
-        text_input_submitted = st.form_submit_button('Enter')
-        if text_input_submitted and text_input != '':
-            st.session_state.input_result_string = text_input
-        elif text_input_submitted and text_input == '':
-            st.warning("Please enter a text")
-
-
-# Audio Upload
-elif input_type == "Audio (Speech)":
-    audio_input = st.file_uploader("Upload an audio file", type=["mp3", "wav"])
-    if audio_input is not None:
-        # if check_openai_key():  # Key Checker
-        client = OpenAI(api_key=openai_api_key)
-        with st.spinner('Processing...'):
-            st.session_state.input_result_string = client.audio.transcriptions.create(
-                model="whisper-1",
-                file=audio_input,
-                response_format="text"
-            )
-        st.success('Done!')
-
-# No input type selected
-else:
-    st.info("Start here by selecting an input type")
-
-# Intermediate Printing
-st.write('---')
-st.header('🖨️')
-st.write(st.session_state.input_result_string)
-
-#### End of Inputs
-
-
-
-#### Start of Modifying Prompt (Optional)
-
-# Modifying Prompt
-st.write('---')
-st.header('Optional Modifying Prompt')
-
-with st.form('modifying_prompt_input_form'):
-    modifying_prompt_text = st.text_area("Enter text",
-                                         placeholder="Your optional modifying prompt here. Can be left empty if not needed, but you will still need to submit it.")
-    modifying_prompt_submitted = st.form_submit_button('Enter')
-    if modifying_prompt_submitted and modifying_prompt_text != '':
-        #if check_openai_key():  # Key Checker
-        st.session_state.modifying_prompt = modifying_prompt_text
-
-        completion = openAI_client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": st.session_state.input_result_string},
-                {"role": "user", "content": st.session_state.modifying_prompt}
-            ]
+        streamlit_pannellum(
+            config={
+                "default": {
+                    "firstScene": "generated",
+                    "autoLoad": True
+                },
+                "scenes": {
+                    "generated": {
+                        "title": "Generated Panoramic Image",
+                        "type": "equirectangular",
+                        "panorama": image_path,
+                        "autoLoad": True,
+                    }
+                }
+            }
         )
 
-        print(completion.choices[0].message.content)
-        st.session_state.output_result_string = completion.choices[0].message.content
-
-    elif modifying_prompt_submitted and modifying_prompt_text == '':
-        st.info("Skipping modifying prompt.")
-        st.session_state.output_result_string = st.session_state.input_result_string
-
-# Intermediate Printing
-st.write('---')
-st.header('🖨️')
-st.write(st.session_state.output_result_string)
-
-#### End of Modifying Prompt (Optional)
-
-
-#### Start of Outputs
-
-# Outputs
-st.write('---')
-st.header('Outputs')
-
-output_type = st.radio(
-    "How would you like to provide your output?",
-    [":rainbow[Image]", "Text", "Audio (Speech)", "CAD Model (Experimental)"],
-    index=None, horizontal=True, label_visibility='collapsed'
+st.markdown(
+    '''
+    <iframe width="600" height="400" allowfullscreen style="border-style:none;"                            src="https://cdn.pannellum.org/2.5/pannellum.htm#panorama=https://imgur.com/EsVeC9N"></iframe>
+    ''',
+    unsafe_allow_html=True
 )
 
-# Image Upload
-if output_type == ":rainbow[Image]":
-    if st.button('Generate Image'):
-        #if check_openai_key():  # Key Checker
-        with st.spinner('Processing...'):
-            response = openAI_client.images.generate(
-                model="dall-e-3",
-                prompt=st.session_state.output_result_string,
-                size="1024x1024",
-                quality="standard",
-                n=1,
-            )
-            image_url = response.data[0].url
-        st.success('Done!')
-        st.image(image_url)
-        st.link_button("Download Image", image_url)
-
-# Text Input
-elif output_type == "Text":
-    st.write(st.session_state.output_result_string)
-
-# Audio Text to Speech
-elif output_type == "Audio (Speech)":
-    if elevenlabs_api_key == '':
-        st.warning("Please enter your **paid** 11Labs API Key in the settings to generate the audio.")
-    if elevenlabs_api_key != '':
-        from elevenlabs import set_api_key
-
-        set_api_key(elevenlabs_api_key)
-        if st.button('Generate Audio'):
-            audio_output_char_count = len(st.session_state.output_result_string)
-            if audio_output_char_count > 2500:
-                st.warning(
-                    f"Your text is {audio_output_char_count} characters long. The maximum character count for the free tier is 2500. Shortening text.")
-                st.session_state.output_result_string = st.session_state.output_result_string[:2500]
-
-            with st.spinner('Processing...'):
-                elevenlabs_audio = generate(
-                    text=st.session_state.output_result_string,
-                    voice="George",
-                    model="eleven_multilingual_v2"
-                )
-            st.success('Done!')
-            st.audio(elevenlabs_audio, format='audio/mpeg')
-
-# CAD Model
-elif output_type == "CAD Model (Experimental)":
-    if zoo_cad_api_key is None or zoo_cad_api_key == '':
-        st.warning("Please enter your ZOO CAD API Key in the settings to generate the 3D model.")
-    else:
-        client = Client(token=zoo_cad_api_key)
-        st.info(
-            '**Straight from their [API documentation](https://zoo.dev/docs/api/ai/generate-a-cad-model-from-text?lang=python):** "This is an alpha endpoint. It will change in the future. The current output is honestly pretty bad. So if you find this endpoint, you get what you pay for, which currently is nothing. But in the future will be made a lot better."')
-        cad_prompt_submitted = st.button("Submit")
-
-        if cad_prompt_submitted:
-            with st.status("Generating 3D Model", expanded=True) as status:
-
-                # Sending Query
-                st.write("Sending Query...")
-                cad_gen_id = text_to_cad_create(st.session_state.output_result_string, client)
-                st.write(200, f"CAD Gen ID: {cad_gen_id}")
-                st.write("Fetching 3D Model...")
-
-                # Fetching Model
-                while True:
-                    cad_response_body = get_text_to_cad_model(cad_gen_id, client)
-                    if cad_response_body.status == 'failed':
-                        st.write(500, f'Generation {cad_response_body.status}, aborting')
-                        break
-                    if cad_response_body.status == 'completed':
-                        st.write(200, f'Generation {cad_response_body.status}, Model fetched!')
-                        break
-                    st.write(100, f'Generation {cad_response_body.status}, waiting...')
-                    time.sleep(0.1)
-
-                # Converting Model
-                st.write("Converting Model...")
-                stl_binary = decode_stl(cad_response_body)
-                st.write(200, "Model converted!")
-                st.download_button(
-                    label="Download STL",
-                    data=stl_binary,
-                    file_name="model.stl",
-                    mime="model/stl"
-                )
-                status.update(label="Generation complete", state="complete")
-
-#### End of Outputs
