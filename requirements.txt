@@ -77,4 +77,4 @@ websockets==11.0.3
 zipp==3.17.0
 ffmpeg==1.4
 pydub==0.25.1
-st_audiorec
+streamlit_audiorec
