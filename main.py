@@ -14,7 +14,7 @@ import requests
 from PIL import Image
 
 # Initialize the OpenAI client
-openai_api_key = os.environ['openai_api_key']
+openai_api_key = st.secrets['openai_api_key']
 client = openai.OpenAI(api_key=openai_api_key)
 
 # Authenticate the Replicate client using the environment variable
@@ -98,7 +98,7 @@ if wav_audio_data is not None:
         response = requests.post(
             "https://api.stability.ai/v2beta/stable-image/generate/sd3",
             headers={
-                "authorization": sd_api_key,
+                "authorization": st.secrets['sd_api_key'],
                 "accept": "image/*"
             },
             files={
