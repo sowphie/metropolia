@@ -77,7 +77,4 @@ websockets==11.0.3
 zipp==3.17.0
 ffmpeg==1.4
 pydub==0.25.1
-Flask
-fastapi
-uvicorn
-django-page-cms
+st_audiorec
