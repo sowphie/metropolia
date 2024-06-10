@@ -14,11 +14,11 @@ import requests
 from PIL import Image
 
 # Initialize the OpenAI client
-openai_api_key = st.secrets['openai_api_key']
+openai_api_key = st.secrets["openai_api_key"]
 client = openai.OpenAI(api_key=openai_api_key)
 
 # Authenticate the Replicate client using the environment variable
-sd_api_key = os.environ['sd_api_key']
+sd_api_key = os.environ["sd_api_key"]
 
 # Set page theme
 page_bg_color = "#000ff0"
