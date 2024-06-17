@@ -181,8 +181,7 @@ st.markdown("""
 if (typeof AudioWorkletNode !== 'undefined') {
     const audioContext = new AudioContext();
     audioContext.audioWorklet.addModule('processor.js').then(() => {
-        const audioWorkletNode = new AudioWorkletNode(audioContext, 'processor');
-        // Connect the node and start processing
+        const audioWorkletNode = new AudioWorkletNode(audioContext, 'my-processor');
         console.log('AudioWorkletNode is working');
     }).catch(error => {
         console.error('Error loading AudioWorklet module:', error);
