@@ -1,19 +1,18 @@
+entrypoint = "main.py"
+run = ["streamlit", "run", "main.py", "--server.headless", "true"]
+
 modules = ["python-3.10:v18-20230807-322e88b"]
-run = "streamlit run main.py --server.port=8080"
+
+hidden = [".pythonlibs"]
 
 [nix]
 channel = "stable-23_05"
 
-[unitTest]
-language = "python3"
-
-[gitHubImport]
-requiredFiles = [".replit", "replit.nix"]
-
 [deployment]
-run = ["sh", "-c", "streamlit run main.py --server.port=8080"]
-deploymentTarget = "cloudrun"
+run = ["streamlit", "run", "--server.address", "0.0.0.0", "--server.port", "8501", "--server.headless", "true", "--server.enableCORS=true", "--server.enableXsrfProtection=false", "--server.enableWebsocketCompression=false", "--server.runOnSave=false", "main.py"]
+ignorePorts = false
+deploymentTarget = "gce"
 
 [[ports]]
-localPort = 8080
+localPort = 8501
 externalPort = 80

@@ -1,5 +1,7 @@
 {pkgs}: {
   deps = [
+    pkgs.fetchutils
+    pkgs.run
     pkgs.ffmpeg-full
     pkgs.pkg-config
     pkgs.arrow-cpp

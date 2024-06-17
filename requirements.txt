@@ -77,5 +77,10 @@ websockets==11.0.3
 zipp==3.17.0
 ffmpeg==1.4
 pydub==0.25.1
-streamlit_audiorec
 streamlit_pannellum
+folium
+streamlit_folium
+openai
+requests
+streamlit
+replicate
