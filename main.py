@@ -175,23 +175,6 @@ def get_next_audio_filename(directory,
 audio_directory = 'docs/audio'
 file_path = get_next_audio_filename(audio_directory)
 
-# Inject JavaScript directly for Audio Worklet Node
-st.markdown("""
-<script>
-if (typeof AudioWorkletNode !== 'undefined') {
-    const audioContext = new AudioContext();
-    audioContext.audioWorklet.addModule('processor.js').then(() => {
-        const audioWorkletNode = new AudioWorkletNode(audioContext, 'my-processor');
-        console.log('AudioWorkletNode is working');
-    }).catch(error => {
-        console.error('Error loading AudioWorklet module:', error);
-    });
-} else {
-    console.warn('AudioWorkletNode is not supported in this browser.');
-}
-</script>
-""", unsafe_allow_html=True)
-
 #Record and transcribe
 
 st.markdown('''<style>.stAudio {height: 45px; color: #000ff00
@@ -242,7 +225,7 @@ if wav_audio_data is not None:
         )
 
         if response.status_code == 200:
-
+            print("Image generation successful")
             def get_next_image_filename(directory,
                                         base_filename="modifed",
                                         extension=".png"):
@@ -281,8 +264,7 @@ if wav_audio_data is not None:
                     }
                 )
                 print(upscaled)
-                if upscaled is not None:
-                    def get_next_upscale_filename(directory, base_filename="upscaled", extension=".png"):
+                def get_next_upscale_filename(directory, base_filename="upscaled", extension=".png"):
                         if not os.path.exists(directory):
                             os.makedirs(directory)
                         files = os.listdir(directory)
@@ -293,12 +275,12 @@ if wav_audio_data is not None:
                         next_number = max(numbers, default=0) + 1
                         return os.path.join(directory, f"{base_filename}{next_number}{extension}")
     
-                    image_directory = 'static/images'
-                    os.makedirs(image_directory, exist_ok=True)
+                image_directory = 'static/images'
+                os.makedirs(image_directory, exist_ok=True)
     
-                    upscaled_image_path = get_next_upscale_filename(image_directory)
-                    with open(upscaled_image_path, 'wb') as file:
-                        file.write(response.content)
+                upscaled_image_path = get_next_upscale_filename(image_directory)
+                with open(upscaled_image_path, 'wb') as file:
+                    file.write(response.content)
                     print("Upscaled image saved")
                     st.write("Your chosen future:")
                     st.image(upscaled_image_path)

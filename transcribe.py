@@ -16,7 +16,7 @@ def audio_transcribe(filename):
   print("Transcription completed")
   try:
       result = response.text # Assuming the response has a 'text' key with the transcription
-      print(" Your feedback:", result)
+      print("Your feedback:", result)
       return result
   except KeyError:
       print("Error: 'text' key not found in the response")
