@@ -254,56 +254,56 @@ if wav_audio_data is not None:
             print("New image saved")
             print(image_path)  # debug line by minnie
 
-            if image_path is not None:
-                image_content = open(image_path, "rb")
-                upscaled = replicate.run(
-                    "mv-lab/swin2sr:a01b0512004918ca55d02e554914a9eca63909fa83a29ff0f115c78a7045574f",
-                    input={
-                        "task": "real_sr",
-                        "image": image_content
-                    }
-                )
-                print(upscaled)
-                def get_next_upscale_filename(directory, base_filename="upscaled", extension=".png"):
-                        if not os.path.exists(directory):
-                            os.makedirs(directory)
-                        files = os.listdir(directory)
-                        matching_files = [f for f in files 
+            #if image_path is not None:
+                #image_content = open(image_path, "rb")
+                #upscaled = replicate.run(
+                    #"mv-lab/swin2sr:a01b0512004918ca55d02e554914a9eca63909fa83a29ff0f115c78a7045574f",
+                    #input={
+                        #"task": "real_sr",
+                        #"image": image_content
+                    #}
+                #)
+                #print(upscaled)
+                #def get_next_upscale_filename(directory, base_filename="upscaled", extension=".png"):
+                        #if not os.path.exists(directory):
+                            #os.makedirs(directory)
+                        #files = os.listdir(directory)
+                       # matching_files = [f for f in files 
     
-                        if f.startswith(base_filename) and f.endswith(extension)]
-                        numbers = [int(f[len(base_filename):-len(extension)]) for f in matching_files if f[len(base_filename):-len(extension)].isdigit()]
-                        next_number = max(numbers, default=0) + 1
-                        return os.path.join(directory, f"{base_filename}{next_number}{extension}")
+                        #if f.startswith(base_filename) and f.endswith(extension)]
+                        #numbers = [int(f[len(base_filename):-len(extension)]) for f in matching_files if f[len(base_filename):-len(extension)].isdigit()]
+                        #next_number = max(numbers, default=0) + 1
+                        #return os.path.join(directory, f"{base_filename}{next_number}{extension}")
     
-                image_directory = 'static/images'
-                os.makedirs(image_directory, exist_ok=True)
-    
-                upscaled_image_path = get_next_upscale_filename(image_directory)
-                with open(upscaled_image_path, 'wb') as file:
-                    file.write(response.content)
-                    print("Upscaled image saved")
-                    st.write("Your chosen future:")
-                    st.image(upscaled_image_path)
+            image_directory = 'static/images'
+            os.makedirs(image_directory, exist_ok=True)
 
-                    resized_upscaled_image_path = upscaled_image_path
-                    with Image.open(upscaled_image_path) as img:
-                        resized_img = img.resize((4096, 2048))
-                        resized_img.save(resized_upscaled_image_path)
+            image_path = get_next_image_filename(image_directory)
+            with open(image_path, 'wb') as file:
+                file.write(response.content)
+                print("image saved")
+                st.write("Your chosen future:")
+                st.image(image_path)
 
-                    st.write("Your chosen future in 360:")
+                resized_image_path = image_path
+                with Image.open(image_path) as img:
+                    resized_img = img.resize((4096, 2048))
+                    resized_img.save(resized_image_path)
 
-                    streamlit_pannellum(
-                        config={
-                            "default": {
-                                "firstScene": "localScene",
-                                "autoLoad": True
-                            },
-                            "scenes": {
-                                "localScene": {
-                                    "title": "Your chosen future in 360",
-                                    "type": "equirectangular",
-                                    "panorama": f'/app/{resized_upscaled_image_path}', # # MINNIE: Changed path
-                                    "autoLoad": True,
-                                }
+                st.write("Your chosen future in 360:")
+
+                streamlit_pannellum(
+                    config={
+                        "default": {
+                            "firstScene": "localScene",
+                            "autoLoad": True
+                        },
+                        "scenes": {
+                            "localScene": {
+                                "title": "Your chosen future in 360",
+                                "type": "equirectangular",
+                                "panorama": f'/app/{resized_image_path}', # # MINNIE: Changed path
+                                "autoLoad": True,
                             }
-                        })
+                        }
+                    })

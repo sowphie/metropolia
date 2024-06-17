@@ -1,6 +1,0 @@
-pannellum.viewer('panorama', {
-    "type": "equirectangular",
-    "panorama": absolute_image_path,  // Ensure the file name matches your uploaded image
-    "autoLoad": true,
-    "autoRotate": -2
-});
