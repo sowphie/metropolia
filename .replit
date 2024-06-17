@@ -11,7 +11,6 @@ channel = "stable-23_05"
 [deployment]
 run = ["streamlit", "run", "--server.address", "0.0.0.0", "--server.port", "8501", "--server.headless", "true", "--server.enableCORS=true", "--server.enableXsrfProtection=false", "--server.enableWebsocketCompression=false", "--server.runOnSave=false", "main.py"]
 ignorePorts = false
-deploymentTarget = "gce"
 
 [[ports]]
 localPort = 8501

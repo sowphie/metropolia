@@ -175,6 +175,24 @@ def get_next_audio_filename(directory,
 audio_directory = 'docs/audio'
 file_path = get_next_audio_filename(audio_directory)
 
+# Inject JavaScript directly for Audio Worklet Node
+st.markdown("""
+<script>
+if (typeof AudioWorkletNode !== 'undefined') {
+    const audioContext = new AudioContext();
+    audioContext.audioWorklet.addModule('processor.js').then(() => {
+        const audioWorkletNode = new AudioWorkletNode(audioContext, 'processor');
+        // Connect the node and start processing
+        console.log('AudioWorkletNode is working');
+    }).catch(error => {
+        console.error('Error loading AudioWorklet module:', error);
+    });
+} else {
+    console.warn('AudioWorkletNode is not supported in this browser.');
+}
+</script>
+""", unsafe_allow_html=True)
+
 #Record and transcribe
 
 st.markdown('''<style>.stAudio {height: 45px; color: #000ff00
