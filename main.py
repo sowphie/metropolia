@@ -15,7 +15,7 @@ import folium
 sd_api_key = os.environ['sd_api_key']
 
 #Replicate API
-REPLICATE_API_TOKEN = os.environ['REPLICATE_API_TOKEN']
+REPLICATE_API_TOKEN = os.environ['REPLICATE_API_TOKEN'] #only needed for image upscaling
 
 # Set page theme
 primaryColor="#000ff0"
