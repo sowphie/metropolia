@@ -171,85 +171,85 @@ if st.button("Click here to send your feedback", type= 'primary'):
     print(text_path)
 
 # text2image
-if text is not None:
-
-    # Load and resize the image
-    init_image_path = "base_image.png"
-    resized_image_path = "base_image_resized.png"
-
-    with Image.open(init_image_path) as img:
-        resized_img = img.resize((2048, 1024))
-        resized_img.save(resized_image_path)
-
-    response = requests.post(
-        "https://api.stability.ai/v2beta/stable-image/generate/sd3",
-        headers={
-            "authorization": sd_api_key,
-            "accept": "image/*"
-        },
-        files={"image": open(resized_image_path, "rb")},
-        data={
-            "prompt": "Do not change the word ELISAVA on the front building. " + text,
-            "image": resized_image_path,
-            "seed": None,
-            "strength": [0.6],
-            "mode": "image-to-image",
-            "output_format": "png",
-            "model": "sd3-turbo"
-        },
-    )
-
-    if response.status_code == 200:
-        def get_next_image_filename(directory,
-                                    base_filename="modified",
-                                    extension=".png"):
-            if not os.path.exists(directory):
-                os.makedirs(directory)
-            files = os.listdir(directory)
-            matching_files = [
-                f for f in files
-                if f.startswith(base_filename) and f.endswith(extension)
-            ]
-            numbers = [
-                int(f[len(base_filename):-len(extension)])
-                for f in matching_files
-                if f[len(base_filename):-len(extension)].isdigit()
-            ]
-            next_number = max(numbers, default=0) + 1
-            return os.path.join(
-                directory, f"{base_filename}{next_number}{extension}")
-
-        image_directory = 'static/images' # MINNIE: Changed folder name to 'static/images'
-        os.makedirs(image_directory, exist_ok=True)
-
-        image_path = get_next_image_filename(image_directory)
-        with open(image_path, 'wb') as new_image:
-            new_image = new_image.write(response.content)
-        print("New image saved")
-        print(image_path)  # debug line by minnie
-
-     
-        if new_image is not None:
-        
-            st.write("Your chosen future for Elisava:")
-            st.image(image_path)
+    if text is not None:
     
-            st.write("Your chosen future for Elisava in 360 view:")
+        # Load and resize the image
+        init_image_path = "base_image.png"
+        resized_image_path = "base_image_resized.png"
+    
+        with Image.open(init_image_path) as img:
+            resized_img = img.resize((2048, 1024))
+            resized_img.save(resized_image_path)
+    
+        response = requests.post(
+            "https://api.stability.ai/v2beta/stable-image/generate/sd3",
+            headers={
+                "authorization": sd_api_key,
+                "accept": "image/*"
+            },
+            files={"image": open(resized_image_path, "rb")},
+            data={
+                "prompt": "Do not change the word ELISAVA on the front building. " + text,
+                "image": resized_image_path,
+                "seed": None,
+                "strength": [0.6],
+                "mode": "image-to-image",
+                "output_format": "png",
+                "model": "sd3-turbo"
+            },
+        )
+    
+        if response.status_code == 200:
+            def get_next_image_filename(directory,
+                                        base_filename="modified",
+                                        extension=".png"):
+                if not os.path.exists(directory):
+                    os.makedirs(directory)
+                files = os.listdir(directory)
+                matching_files = [
+                    f for f in files
+                    if f.startswith(base_filename) and f.endswith(extension)
+                ]
+                numbers = [
+                    int(f[len(base_filename):-len(extension)])
+                    for f in matching_files
+                    if f[len(base_filename):-len(extension)].isdigit()
+                ]
+                next_number = max(numbers, default=0) + 1
+                return os.path.join(
+                    directory, f"{base_filename}{next_number}{extension}")
+    
+            image_directory = 'static/images' # MINNIE: Changed folder name to 'static/images'
+            os.makedirs(image_directory, exist_ok=True)
+    
+            image_path = get_next_image_filename(image_directory)
+            with open(image_path, 'wb') as new_image:
+                new_image = new_image.write(response.content)
+            print("New image saved")
+            print(image_path)  # debug line by minnie
+    
+         
+            if new_image is not None:
+            
+                st.write("Your chosen future for Elisava:")
+                st.image(image_path)
         
-            streamlit_pannellum(
-                config={
-                    "default": {
-                        "firstScene": "localScene",
-                        "autoLoad": True
-                    },
-                    "scenes": {
-                        "localScene": {
-                            "title": "Your chosen future in 360",
-                            "type": "equirectangular",
-                            "panorama": f'/app/{image_path}', # # MINNIE: Changed path
-                            "autoLoad": True,
-                         }
+                st.write("Your chosen future for Elisava in 360 view:")
+            
+                streamlit_pannellum(
+                    config={
+                        "default": {
+                            "firstScene": "localScene",
+                            "autoLoad": True
+                        },
+                        "scenes": {
+                            "localScene": {
+                                "title": "Your chosen future in 360",
+                                "type": "equirectangular",
+                                "panorama": f'/app/{image_path}', # # MINNIE: Changed path
+                                "autoLoad": True,
+                             }
+                            }
                         }
-                    }
-                )
-
+                    )
+    
